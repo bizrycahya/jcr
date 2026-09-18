@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 33% 98%; /* cream */
+    --foreground: 348 46% 15%; /* dark maroon */
+  }
+
+  .dark {
+    --background: 348 46% 8%;
+    --foreground: 40 33% 96%;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}

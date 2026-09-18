@@ -1,0 +1,458 @@
+// ============================================================================
+// JANIC CHARACTER REPORT - Prisma Schema
+// Jannatun Naim International College
+// Database: PostgreSQL (Supabase compatible) - mudah dipindah ke MySQL
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  KEPALA_SEKOLAH
+  BK
+  WALI_KELAS
+  GURU
+  ORANG_TUA
+  SISWA
+}
+
+enum Jenjang {
+  SMP
+  SMA
+}
+
+enum JenisKelamin {
+  L
+  P
+}
+
+enum StatusSiswa {
+  AKTIF
+  LULUS
+  PINDAH
+  KELUAR
+  NONAKTIF
+}
+
+enum StatusUser {
+  AKTIF
+  NONAKTIF
+  DIBEKUKAN
+}
+
+enum KategoriKarakter {
+  AKHLAK
+  DISIPLIN
+  KEPEMIMPINAN
+  AKADEMIK
+  SOSIAL
+}
+
+enum TingkatPelanggaran {
+  RINGAN
+  SEDANG
+  BERAT
+}
+
+enum StatusPembinaan {
+  DIBUKA
+  PROSES
+  SELESAI
+}
+
+enum PeriodeLaporan {
+  BULANAN
+  SEMESTER
+}
+
+// ============================================================================
+// USER & AUTH
+// ============================================================================
+
+model User {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  email         String?  @unique
+  password      String
+  role          Role
+  status        StatusUser @default(AKTIF)
+  lastLoginAt   DateTime?
+  rememberToken String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  teacher       Teacher?
+  parent        Parent?
+  student       Student?
+
+  activityLogs  ActivityLog[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+// ============================================================================
+// AKADEMIK
+// ============================================================================
+
+model AcademicYear {
+  id         String   @id @default(cuid())
+  tahun      String   @unique // contoh: "2025/2026"
+  semester   Int      // 1 = Ganjil, 2 = Genap
+  isActive   Boolean  @default(false)
+  startDate  DateTime
+  endDate    DateTime
+  createdAt  DateTime @default(now())
+
+  classes         Class[]
+  monthlyReports  MonthlyReport[]
+  semesterReports SemesterReport[]
+
+  @@map("academic_years")
+}
+
+model Class {
+  id             String   @id @default(cuid())
+  nama           String   // contoh: "VII-A"
+  jenjang        Jenjang
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  homeroomId     String?  @unique
+  homeroom       Homeroom? @relation(fields: [homeroomId], references: [id])
+  status         StatusSiswa @default(AKTIF)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  students       Student[]
+  teacherClasses TeacherClass[]
+
+  @@map("classes")
+}
+
+model Homeroom {
+  id        String   @id @default(cuid())
+  teacherId String   @unique
+  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+  class     Class?
+  catatan   HomeroomNote[]
+  createdAt DateTime @default(now())
+
+  @@map("homerooms")
+}
+
+model HomeroomNote {
+  id         String   @id @default(cuid())
+  homeroomId String
+  homeroom   Homeroom @relation(fields: [homeroomId], references: [id])
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id])
+  isi        String
+  createdAt  DateTime @default(now())
+
+  @@map("homeroom_notes")
+}
+
+// ============================================================================
+// GURU / TEACHER
+// ============================================================================
+
+model Teacher {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  nip       String   @unique
+  nama      String
+  jabatan   String
+  mapel     String
+  whatsapp  String
+  email     String?
+  fotoUrl   String?
+  status    StatusUser @default(AKTIF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  homeroom       Homeroom?
+  teacherClasses TeacherClass[]
+  scores         CharacterScore[]
+  journals       TeacherJournal[]
+
+  @@map("teachers")
+}
+
+model TeacherClass {
+  id        String   @id @default(cuid())
+  teacherId String
+  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id])
+  mapel     String
+
+  @@unique([teacherId, classId, mapel])
+  @@map("teacher_classes")
+}
+
+model TeacherJournal {
+  id        String   @id @default(cuid())
+  teacherId String
+  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+  tanggal   DateTime
+  isi       String
+  createdAt DateTime @default(now())
+
+  @@map("teacher_journals")
+}
+
+// ============================================================================
+// SISWA / STUDENT
+// ============================================================================
+
+model Student {
+  id           String       @id @default(cuid())
+  userId       String?      @unique
+  user         User?        @relation(fields: [userId], references: [id])
+  nis          String       @unique
+  nisn         String       @unique
+  nama         String
+  jenisKelamin JenisKelamin
+  tempatLahir  String
+  tanggalLahir DateTime
+  agama        String
+  classId      String
+  class        Class        @relation(fields: [classId], references: [id])
+  fotoUrl      String?
+  namaAyah     String
+  namaIbu      String
+  waOrangTua   String
+  alamat       String
+  status       StatusSiswa  @default(AKTIF)
+  qrCode       String?      @unique
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  parentLinks     ParentStudent[]
+  scores          CharacterScore[]
+  monthlyReports  MonthlyReport[]
+  semesterReports SemesterReport[]
+  achievements    Achievement[]
+  violations      Violation[]
+  homeroomNotes   HomeroomNote[]
+
+  @@map("students")
+}
+
+model Parent {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  nama      String
+  whatsapp  String
+  email     String?
+  createdAt DateTime @default(now())
+
+  studentLinks ParentStudent[]
+
+  @@map("parents")
+}
+
+model ParentStudent {
+  id        String   @id @default(cuid())
+  parentId  String
+  parent    Parent   @relation(fields: [parentId], references: [id])
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+
+  @@unique([parentId, studentId])
+  @@map("parent_students")
+}
+
+// ============================================================================
+// PENILAIAN KARAKTER
+// ============================================================================
+
+model CharacterCategory {
+  id         String   @id @default(cuid())
+  nama       KategoriKarakter @unique
+  label      String
+  deskripsi  String?
+  urutan     Int      @default(0)
+
+  indicators CharacterIndicator[]
+
+  @@map("character_categories")
+}
+
+model CharacterIndicator {
+  id         String   @id @default(cuid())
+  categoryId String
+  category   CharacterCategory @relation(fields: [categoryId], references: [id])
+  nama       String   // contoh: "Sholat", "Kehadiran", "Kerjasama"
+  deskripsi  String?
+  urutan     Int      @default(0)
+
+  scores CharacterScore[]
+
+  @@map("character_indicators")
+}
+
+model CharacterScore {
+  id           String   @id @default(cuid())
+  studentId    String
+  student      Student  @relation(fields: [studentId], references: [id])
+  indicatorId  String
+  indicator    CharacterIndicator @relation(fields: [indicatorId], references: [id])
+  teacherId    String
+  teacher      Teacher  @relation(fields: [teacherId], references: [id])
+  nilai        Int      // skala 1-4
+  predikat     String   // otomatis: Kurang / Cukup / Baik / Sangat Baik
+  deskripsi    String?  // otomatis dari nilai + indikator
+  tanggal      DateTime @default(now())
+  bulan        Int
+  tahun        Int
+  createdAt    DateTime @default(now())
+
+  @@index([studentId, bulan, tahun])
+  @@map("character_scores")
+}
+
+// ============================================================================
+// LAPORAN
+// ============================================================================
+
+model MonthlyReport {
+  id             String   @id @default(cuid())
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id])
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  bulan          Int
+  tahun          Int
+  rataRata       Float
+  predikatUmum   String
+  catatanGuru       String?
+  catatanWali       String?
+  catatanKepsek     String?
+  pdfUrl         String?
+  qrToken        String   @unique @default(cuid())
+  createdAt      DateTime @default(now())
+
+  @@unique([studentId, bulan, tahun])
+  @@map("monthly_reports")
+}
+
+model SemesterReport {
+  id             String   @id @default(cuid())
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id])
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  rataRata       Float
+  ranking        Int?
+  predikatUmum   String
+  pdfUrl         String?
+  qrToken        String   @unique @default(cuid())
+  createdAt      DateTime @default(now())
+
+  @@unique([studentId, academicYearId])
+  @@map("semester_reports")
+}
+
+// ============================================================================
+// PRESTASI & PELANGGARAN
+// ============================================================================
+
+model Achievement {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  judul       String
+  tingkat     String   // sekolah, kecamatan, kabupaten, provinsi, nasional, internasional
+  tanggal     DateTime
+  keterangan  String?
+  buktiUrl    String?
+  createdAt   DateTime @default(now())
+
+  @@map("achievements")
+}
+
+model Violation {
+  id              String   @id @default(cuid())
+  studentId       String
+  student         Student  @relation(fields: [studentId], references: [id])
+  jenis           String
+  tingkat         TingkatPelanggaran
+  tanggal         DateTime
+  keterangan      String?
+  status          StatusPembinaan @default(DIBUKA)
+  suratPembinaanUrl String?
+  suratPanggilanUrl String?
+  createdAt       DateTime @default(now())
+
+  @@map("violations")
+}
+
+// ============================================================================
+// PENGATURAN SEKOLAH
+// ============================================================================
+
+model Settings {
+  id                String   @id @default(cuid())
+  namaSekolah       String   @default("Jannatun Naim International College")
+  yayasan           String?
+  alamat            String?
+  telepon           String?
+  website           String?
+  email             String?
+  logoUrl           String?
+  loginBackgroundUrl String?
+  sidebarColor      String   @default("#681B2B")
+  buttonColor       String   @default("#D4AF37")
+  ttdKepsekUrl      String?
+  ttdWaliUrl        String?
+  stempelUrl        String?
+  updatedAt         DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// ============================================================================
+// SYSTEM: LOG, NOTIFIKASI, BACKUP
+// ============================================================================
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  aksi      String
+  detail    String?
+  ip        String?
+  device    String?
+  browser   String?
+  createdAt DateTime @default(now())
+
+  @@map("activity_logs")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  judul     String
+  pesan     String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
