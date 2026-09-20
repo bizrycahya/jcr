@@ -8,10 +8,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const data = body?.data ?? body;
 
-    const pdfElement = (
-      <JcrPdfDocument data={data} />
-    ) as React.ReactElement;
-
+    const pdfElement = <JcrPdfDocument data={data} /> as React.ReactElement;
     const buffer = await renderToBuffer(pdfElement);
     const pdfBytes = new Uint8Array(buffer);
 
