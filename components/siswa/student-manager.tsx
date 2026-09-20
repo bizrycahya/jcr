@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Search, Plus, Pencil, Trash2, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Download, ChevronLeft, ChevronRight, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { StudentFormDialog, type StudentRecord } from "./student-form-dialog";
+import { StudentImportDialog } from "./student-import-dialog";
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { GraduationCap } from "lucide-react";
@@ -40,6 +41,7 @@ export function StudentManager({ classes }: { classes: ClassOption[] }) {
   const [editing, setEditing] = useState<StudentRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StudentRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
@@ -66,7 +68,6 @@ export function StudentManager({ classes }: { classes: ClassOption[] }) {
     fetchStudents();
   }, [fetchStudents]);
 
-  // reset ke halaman 1 setiap kali search/filter berubah
   useEffect(() => {
     setPage(1);
   }, [search, classFilter]);
@@ -102,6 +103,13 @@ export function StudentManager({ classes }: { classes: ClassOption[] }) {
             <Download className="h-4 w-4" />
             Export Excel
           </a>
+          <button
+            onClick={() => setImportOpen(true)}
+            className="flex items-center gap-2 rounded-xl border border-maroon-900/15 px-4 py-2.5 text-sm text-maroon-800 hover:bg-maroon-900/5"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Import Excel
+          </button>
           <button
             onClick={() => {
               setEditing(null);
@@ -162,7 +170,7 @@ export function StudentManager({ classes }: { classes: ClassOption[] }) {
                   <EmptyState
                     icon={GraduationCap}
                     title="Belum ada data siswa"
-                    description="Klik “Tambah Siswa” untuk mulai menambahkan data."
+                    description='Klik "Tambah Siswa" untuk mulai menambahkan data.'
                   />
                 </td>
               </tr>
@@ -238,6 +246,12 @@ export function StudentManager({ classes }: { classes: ClassOption[] }) {
         onSaved={fetchStudents}
         classes={classes}
         initialData={editing}
+      />
+
+      <StudentImportDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={fetchStudents}
       />
 
       <ConfirmDialog
