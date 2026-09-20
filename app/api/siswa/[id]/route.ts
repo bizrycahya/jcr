@@ -8,15 +8,17 @@ const ALLOWED_ROLES = ["SUPER_ADMIN", "ADMIN"];
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getCurrentSession();
   if (!session?.user || !ALLOWED_ROLES.includes(session.user.role as string)) {
     return NextResponse.json({ message: "Tidak diizinkan." }, { status: 403 });
   }
 
+  const { id } = await params;
+
   const student = await prisma.student.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { class: true },
   });
 
@@ -27,13 +29,18 @@ export async function GET(
   return NextResponse.json({ data: student });
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const session = await getCurrentSession();
   if (!session?.user || !ALLOWED_ROLES.includes(session.user.role as string)) {
     return NextResponse.json({ message: "Tidak diizinkan." }, { status: 403 });
   }
 
-  const existing = await prisma.student.findUnique({ where: { id: params.id } });
+  const { id } = await params;
+
+  const existing = await prisma.student.findUnique({ where: { id } });
   if (!existing) {
     return NextResponse.json({ message: "Siswa tidak ditemukan." }, { status: 404 });
   }
@@ -50,8 +57,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
   // Cek duplikasi NIS/NISN, kecualikan data siswa ini sendiri
   const [duplicateNis, duplicateNisn] = await Promise.all([
-    prisma.student.findFirst({ where: { nis: parsed.data.nis, NOT: { id: params.id } } }),
-    prisma.student.findFirst({ where: { nisn: parsed.data.nisn, NOT: { id: params.id } } }),
+    prisma.student.findFirst({ where: { nis: parsed.data.nis, NOT: { id } } }),
+    prisma.student.findFirst({ where: { nisn: parsed.data.nisn, NOT: { id } } }),
   ]);
 
   if (duplicateNis) {
@@ -62,7 +69,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 
   const student = await prisma.student.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       ...parsed.data,
       fotoUrl: parsed.data.fotoUrl || null,
@@ -83,19 +90,21 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getCurrentSession();
   if (!session?.user || !ALLOWED_ROLES.includes(session.user.role as string)) {
     return NextResponse.json({ message: "Tidak diizinkan." }, { status: 403 });
   }
 
-  const existing = await prisma.student.findUnique({ where: { id: params.id } });
+  const { id } = await params;
+
+  const existing = await prisma.student.findUnique({ where: { id } });
   if (!existing) {
     return NextResponse.json({ message: "Siswa tidak ditemukan." }, { status: 404 });
   }
 
-  await prisma.student.delete({ where: { id: params.id } });
+  await prisma.student.delete({ where: { id } });
 
   await logActivity({
     userId: session.user.id,
