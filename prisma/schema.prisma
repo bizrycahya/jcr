@@ -83,20 +83,20 @@ enum PeriodeLaporan {
 // ============================================================================
 
 model User {
-  id            String   @id @default(cuid())
-  username      String   @unique
-  email         String?  @unique
+  id            String     @id @default(cuid())
+  username      String     @unique
+  email         String?    @unique
   password      String
   role          Role
   status        StatusUser @default(AKTIF)
   lastLoginAt   DateTime?
   rememberToken String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
-  teacher       Teacher?
-  parent        Parent?
-  student       Student?
+  teacher Teacher?
+  parent  Parent?
+  student Student?
 
   activityLogs  ActivityLog[]
   notifications Notification[]
@@ -109,13 +109,13 @@ model User {
 // ============================================================================
 
 model AcademicYear {
-  id         String   @id @default(cuid())
-  tahun      String   @unique // contoh: "2025/2026"
-  semester   Int      // 1 = Ganjil, 2 = Genap
-  isActive   Boolean  @default(false)
-  startDate  DateTime
-  endDate    DateTime
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  tahun     String   @unique // contoh: "2025/2026"
+  semester  Int // 1 = Ganjil, 2 = Genap
+  isActive  Boolean  @default(false)
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
 
   classes         Class[]
   monthlyReports  MonthlyReport[]
@@ -125,16 +125,16 @@ model AcademicYear {
 }
 
 model Class {
-  id             String   @id @default(cuid())
-  nama           String   // contoh: "VII-A"
+  id             String       @id @default(cuid())
+  nama           String // contoh: "VII-A"
   jenjang        Jenjang
   academicYearId String
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
-  homeroomId     String?  @unique
-  homeroom       Homeroom? @relation(fields: [homeroomId], references: [id])
-  status         StatusSiswa @default(AKTIF)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  homeroomId     String?      @unique
+  homeroom       Homeroom?    @relation(fields: [homeroomId], references: [id])
+  status         StatusSiswa  @default(AKTIF)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   students       Student[]
   teacherClasses TeacherClass[]
@@ -143,12 +143,12 @@ model Class {
 }
 
 model Homeroom {
-  id        String   @id @default(cuid())
-  teacherId String   @unique
-  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+  id        String         @id @default(cuid())
+  teacherId String         @unique
+  teacher   Teacher        @relation(fields: [teacherId], references: [id])
   class     Class?
   catatan   HomeroomNote[]
-  createdAt DateTime @default(now())
+  createdAt DateTime       @default(now())
 
   @@map("homerooms")
 }
@@ -170,10 +170,10 @@ model HomeroomNote {
 // ============================================================================
 
 model Teacher {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id])
-  nip       String   @unique
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id])
+  nip       String     @unique
   nama      String
   jabatan   String
   mapel     String
@@ -181,8 +181,8 @@ model Teacher {
   email     String?
   fotoUrl   String?
   status    StatusUser @default(AKTIF)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   homeroom       Homeroom?
   teacherClasses TeacherClass[]
@@ -193,11 +193,11 @@ model Teacher {
 }
 
 model TeacherClass {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   teacherId String
-  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+  teacher   Teacher @relation(fields: [teacherId], references: [id])
   classId   String
-  class     Class    @relation(fields: [classId], references: [id])
+  class     Class   @relation(fields: [classId], references: [id])
   mapel     String
 
   @@unique([teacherId, classId, mapel])
@@ -268,11 +268,11 @@ model Parent {
 }
 
 model ParentStudent {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   parentId  String
-  parent    Parent   @relation(fields: [parentId], references: [id])
+  parent    Parent  @relation(fields: [parentId], references: [id])
   studentId String
-  student   Student  @relation(fields: [studentId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id])
 
   @@unique([parentId, studentId])
   @@map("parent_students")
@@ -283,24 +283,25 @@ model ParentStudent {
 // ============================================================================
 
 model CharacterCategory {
-  id         String   @id @default(cuid())
-  nama       KategoriKarakter @unique
-  label      String
-  deskripsi  String?
-  urutan     Int      @default(0)
+  id        String           @id @default(cuid())
+  nama      KategoriKarakter @unique
+  label     String
+  deskripsi String?
+  urutan    Int              @default(0)
 
-  indicators CharacterIndicator[]
+  indicators     CharacterIndicator[]
+  monthlyDetails MonthlyReportDetail[]
 
   @@map("character_categories")
 }
 
 model CharacterIndicator {
-  id         String   @id @default(cuid())
+  id         String            @id @default(cuid())
   categoryId String
   category   CharacterCategory @relation(fields: [categoryId], references: [id])
-  nama       String   // contoh: "Sholat", "Kehadiran", "Kerjasama"
+  nama       String // contoh: "Sholat", "Kehadiran", "Kerjasama"
   deskripsi  String?
-  urutan     Int      @default(0)
+  urutan     Int               @default(0)
 
   scores CharacterScore[]
 
@@ -308,20 +309,20 @@ model CharacterIndicator {
 }
 
 model CharacterScore {
-  id           String   @id @default(cuid())
-  studentId    String
-  student      Student  @relation(fields: [studentId], references: [id])
-  indicatorId  String
-  indicator    CharacterIndicator @relation(fields: [indicatorId], references: [id])
-  teacherId    String
-  teacher      Teacher  @relation(fields: [teacherId], references: [id])
-  nilai        Int      // skala 1-4
-  predikat     String   // otomatis: Kurang / Cukup / Baik / Sangat Baik
-  deskripsi    String?  // otomatis dari nilai + indikator
-  tanggal      DateTime @default(now())
-  bulan        Int
-  tahun        Int
-  createdAt    DateTime @default(now())
+  id          String             @id @default(cuid())
+  studentId   String
+  student     Student            @relation(fields: [studentId], references: [id])
+  indicatorId String
+  indicator   CharacterIndicator @relation(fields: [indicatorId], references: [id])
+  teacherId   String
+  teacher     Teacher            @relation(fields: [teacherId], references: [id])
+  nilai       Int // skala 1-4
+  predikat    String // otomatis: Kurang / Cukup / Baik / Sangat Baik
+  deskripsi   String? // otomatis dari nilai + indikator
+  tanggal     DateTime           @default(now())
+  bulan       Int
+  tahun       Int
+  createdAt   DateTime           @default(now())
 
   @@index([studentId, bulan, tahun])
   @@map("character_scores")
@@ -332,38 +333,54 @@ model CharacterScore {
 // ============================================================================
 
 model MonthlyReport {
-  id             String   @id @default(cuid())
-  studentId      String
-  student        Student  @relation(fields: [studentId], references: [id])
-  academicYearId String
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
-  bulan          Int
-  tahun          Int
-  rataRata       Float
-  predikatUmum   String
-  catatanGuru       String?
-  catatanWali       String?
-  catatanKepsek     String?
-  pdfUrl         String?
-  qrToken        String   @unique @default(cuid())
-  createdAt      DateTime @default(now())
+  id                  String       @id @default(cuid())
+  studentId           String
+  student             Student      @relation(fields: [studentId], references: [id])
+  academicYearId      String
+  academicYear        AcademicYear @relation(fields: [academicYearId], references: [id])
+  bulan               Int
+  tahun               Int
+  rataRata            Float
+  predikatUmum        String
+  catatanGuru         String?
+  catatanWali         String?
+  catatanKepsek       String?
+  rencanaTindakLanjut String?
+  pdfUrl              String?
+  qrToken             String       @unique @default(cuid())
+  createdAt           DateTime     @default(now())
+
+  details MonthlyReportDetail[]
 
   @@unique([studentId, bulan, tahun])
   @@map("monthly_reports")
 }
 
+model MonthlyReportDetail {
+  id         String            @id @default(cuid())
+  reportId   String
+  report     MonthlyReport     @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   CharacterCategory @relation(fields: [categoryId], references: [id])
+  indikator  String
+  capaian    String
+
+  @@unique([reportId, categoryId])
+  @@map("monthly_report_details")
+}
+
 model SemesterReport {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   studentId      String
-  student        Student  @relation(fields: [studentId], references: [id])
+  student        Student      @relation(fields: [studentId], references: [id])
   academicYearId String
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
   rataRata       Float
   ranking        Int?
   predikatUmum   String
   pdfUrl         String?
-  qrToken        String   @unique @default(cuid())
-  createdAt      DateTime @default(now())
+  qrToken        String       @unique @default(cuid())
+  createdAt      DateTime     @default(now())
 
   @@unique([studentId, academicYearId])
   @@map("semester_reports")
@@ -374,31 +391,31 @@ model SemesterReport {
 // ============================================================================
 
 model Achievement {
-  id          String   @id @default(cuid())
-  studentId   String
-  student     Student  @relation(fields: [studentId], references: [id])
-  judul       String
-  tingkat     String   // sekolah, kecamatan, kabupaten, provinsi, nasional, internasional
-  tanggal     DateTime
-  keterangan  String?
-  buktiUrl    String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id])
+  judul      String
+  tingkat    String // sekolah, kecamatan, kabupaten, provinsi, nasional, internasional
+  tanggal    DateTime
+  keterangan String?
+  buktiUrl   String?
+  createdAt  DateTime @default(now())
 
   @@map("achievements")
 }
 
 model Violation {
-  id              String   @id @default(cuid())
-  studentId       String
-  student         Student  @relation(fields: [studentId], references: [id])
-  jenis           String
-  tingkat         TingkatPelanggaran
-  tanggal         DateTime
-  keterangan      String?
-  status          StatusPembinaan @default(DIBUKA)
+  id                String             @id @default(cuid())
+  studentId         String
+  student           Student            @relation(fields: [studentId], references: [id])
+  jenis             String
+  tingkat           TingkatPelanggaran
+  tanggal           DateTime
+  keterangan        String?
+  status            StatusPembinaan    @default(DIBUKA)
   suratPembinaanUrl String?
   suratPanggilanUrl String?
-  createdAt       DateTime @default(now())
+  createdAt         DateTime           @default(now())
 
   @@map("violations")
 }
@@ -408,21 +425,22 @@ model Violation {
 // ============================================================================
 
 model Settings {
-  id                String   @id @default(cuid())
-  namaSekolah       String   @default("Jannatun Naim International College")
-  yayasan           String?
-  alamat            String?
-  telepon           String?
-  website           String?
-  email             String?
-  logoUrl           String?
+  id                 String   @id @default(cuid())
+  namaSekolah        String   @default("Jannatun Naim International College")
+  yayasan            String?
+  alamat             String?
+  telepon            String?
+  website            String?
+  email              String?
+  logoUrl            String?
   loginBackgroundUrl String?
-  sidebarColor      String   @default("#681B2B")
-  buttonColor       String   @default("#D4AF37")
-  ttdKepsekUrl      String?
-  ttdWaliUrl        String?
-  stempelUrl        String?
-  updatedAt         DateTime @updatedAt
+  sidebarColor       String   @default("#681B2B")
+  buttonColor        String   @default("#D4AF37")
+  namaKepalaSekolah  String?
+  ttdKepsekUrl       String?
+  ttdWaliUrl         String?
+  stempelUrl         String?
+  updatedAt          DateTime @updatedAt
 
   @@map("settings")
 }
