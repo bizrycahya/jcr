@@ -31,6 +31,7 @@ export function LaporanManager() {
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [target, setTarget] = useState<StudentRow | null>(null);
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!classId) {
@@ -60,6 +61,21 @@ export function LaporanManager() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  async function handleGeneratePdf(reportId: string) {
+    setGeneratingId(reportId);
+    const res = await fetch(`/api/laporan/bulanan/${reportId}/pdf`, { method: "POST" });
+    const json = await res.json();
+    setGeneratingId(null);
+
+    if (!res.ok) {
+      toast.error(json.message ?? "Gagal membuat PDF.");
+      return;
+    }
+
+    toast.success("PDF berhasil dibuat.");
+    fetchData();
+  }
 
   return (
     <div className="space-y-4">
@@ -149,6 +165,15 @@ export function LaporanManager() {
                       >
                         {s.reportId ? "Edit Laporan" : "Buat Laporan"}
                       </button>
+                      {s.reportId && (
+                        <button
+                          onClick={() => handleGeneratePdf(s.reportId as string)}
+                          disabled={generatingId === s.reportId}
+                          className="rounded-lg px-3 py-1.5 text-sm text-maroon-800 hover:bg-maroon-900/5 disabled:opacity-50"
+                        >
+                          {generatingId === s.reportId ? "Membuat..." : "Generate PDF"}
+                        </button>
+                      )}
                       {s.pdfUrl && (
                         <a
                           href={s.pdfUrl}

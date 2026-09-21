@@ -1,7 +1,7 @@
 import React from 'react';
 import { NextRequest } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
-import JcrPdfDocument from '@/lib/pdf/jcr';
+import { JcrPdfDocument } from '@/lib/pdf/jcr';
 
 export async function POST(req: NextRequest) {
   try {
